@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Query, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 from enum import Enum
@@ -75,13 +76,6 @@ class StatusResponse(BaseModel):
     video_url: Optional[str] = None
     progress: int = 0
     error: Optional[str] = None
-
-
-# ==================== In-Memory Job Tracking ====================
-# In production, use a database like PostgreSQL or Redis
-
-# ==================== In-Memory Job Tracking ====================
-# Now using PostgreSQL database for job tracking
 
 
 # ==================== API Routes ====================
@@ -207,16 +201,15 @@ async def list_providers():
 @app.post("/api/v1/generate", response_model=VideoGenerationResponse, tags=["Generation"])
 async def generate_video(
     request: VideoGenerationRequest,
-    current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Generate video from user prompt (requires authentication)
+    # Generate video from user prompt
     # Steps: Generate video using selected provider (Runway/Minimax)
     # Return job ID for status tracking
     job_id = str(uuid.uuid4())
     
     try:
-        logger.info(f"[{job_id}] Video generation request from user: {current_user.username}")
+        logger.info(f"[{job_id}] Video generation request")
         
         # Use the duration from request
         duration = min(request.duration, settings.MAX_VIDEO_DURATION)
@@ -236,7 +229,7 @@ async def generate_video(
         # Store job info in PostgreSQL database
         video_job = VideoJobModel(
             job_id=job_id,
-            username=current_user.username,
+            username="anonymous",
             prompt=request.prompt,
             image_url=request.image_url,
             provider=request.provider.value,
@@ -326,31 +319,16 @@ async def get_job_info(job_id: str, db: Session = Depends(get_db)):
     }
 
 
-# ==================== Lifecycle Events ====================
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("=" * 60)
-    logger.info("🚀 Image-to-Video Chatbot API Starting")
-    logger.info(f"   Provider: {settings.DEFAULT_VIDEO_PROVIDER.upper()}")
-    logger.info(f"   LLM Model: {settings.LLM_MODEL}")
-    logger.info(f"   API: http://{settings.API_HOST}:{settings.API_PORT}")
-    logger.info(f"   Docs: http://{settings.API_HOST}:{settings.API_PORT}/docs")
-    logger.info("=" * 60)
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("🛑 Chatbot API shut down")
-
-
 # ==================== Error Handlers ====================
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     # Handle HTTP exceptions
     logger.error(f"HTTP Exception: {exc.detail}")
-    return {"error": exc.detail, "status_code": exc.status_code}
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "status_code": exc.status_code}
+    )
 
 
 if __name__ == "__main__":
