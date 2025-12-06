@@ -1,4 +1,5 @@
 # User database operations with PostgreSQL
+from typing import Optional
 from sqlalchemy.orm import Session
 from auth import UserInDB, get_password_hash
 from db import UserModel
@@ -19,7 +20,7 @@ def create_user(db: Session, username: str, email: str, password: str, full_name
     return user
 
 
-def get_user(db: Session, username: str) -> UserModel | None:
+def get_user(db: Session, username: str) -> Optional[UserModel]:
     # Get user from PostgreSQL database by username
     return db.query(UserModel).filter(UserModel.username == username).first()
 
@@ -29,7 +30,7 @@ def user_exists(db: Session, username: str) -> bool:
     return db.query(UserModel).filter(UserModel.username == username).first() is not None
 
 
-def get_user_by_email(db: Session, email: str) -> UserModel | None:
+def get_user_by_email(db: Session, email: str) -> Optional[UserModel]:
     # Get user from database by email
     return db.query(UserModel).filter(UserModel.email == email).first()
 
