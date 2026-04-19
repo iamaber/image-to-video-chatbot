@@ -1,4 +1,5 @@
 # Application configuration
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field
@@ -19,15 +20,20 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5500",
     ])
 
-    RUNWAY_API_KEY: Optional[str] = None
-    MINIMAX_API_KEY: Optional[str] = None
+    SVD_MODEL_ID: str = "stabilityai/stable-video-diffusion-img2vid-xt"
+    SVD_DEVICE: str = "cuda"
+    SVD_NUM_FRAMES: int = 25
+    SVD_FPS: int = 7
+    SVD_DECODE_CHUNK_SIZE: int = 8
+    GENERATED_MEDIA_DIR: str = str(Path("backend/generated").resolve())
+    PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
     OPENAI_API_KEY: Optional[str] = None
     LLM_MODEL: str = "o3-mini"
 
     DEFAULT_VIDEO_DURATION: int = 5
     MAX_VIDEO_DURATION: int = 10
-    DEFAULT_VIDEO_PROVIDER: str = "runway"
+    DEFAULT_VIDEO_PROVIDER: str = "svd"
     REQUEST_TIMEOUT: int = 300
 
     SECRET_KEY: str = "change-me-in-.env"

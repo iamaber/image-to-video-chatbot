@@ -20,6 +20,17 @@ from backend.app.services.video_service import VideoGenerationService, VideoProv
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Generation"])
+PROVIDER_SUMMARIES = [
+    {
+        "name": "Stable Video Diffusion",
+        "id": "svd",
+        "model": settings.SVD_MODEL_ID,
+        "max_duration": settings.MAX_VIDEO_DURATION,
+        "quality": "good",
+        "speed": "local_gpu",
+        "description": "Free open-weight image-to-video model running locally through Diffusers",
+    }
+]
 
 
 def serialize_job(job: VideoJobModel) -> JobInfoResponse:
@@ -50,29 +61,44 @@ def serialize_job_list_item(job: VideoJobModel) -> JobListItemResponse:
     )
 
 
+def build_generation_response(job_id: str, provider: VideoProvider, video_url: str | None) -> VideoGenerationResponse:
+    status = "completed" if provider == VideoProvider.SVD else "pending"
+    message = f"Video generation completed using {provider.value}."
+    return VideoGenerationResponse(
+        job_id=job_id,
+        status=status,
+        provider=provider.value,
+        video_url=video_url,
+        message=message,
+    )
+
+
+def create_video_job_record(
+    *,
+    job_id: str,
+    username: str,
+    request: VideoGenerationRequest,
+    provider_job_id: str,
+    duration: int,
+) -> VideoJobModel:
+    is_local_provider = request.provider == VideoProvider.SVD
+    return VideoJobModel(
+        job_id=job_id,
+        username=username,
+        prompt=request.prompt,
+        image_url=request.image_url,
+        provider=request.provider.value,
+        duration=str(duration),
+        status="completed" if is_local_provider else "pending",
+        video_url=provider_job_id if is_local_provider else None,
+        provider_job_id=provider_job_id,
+    )
+
+
 @router.get("/api/v1/providers", tags=["Info"])
 async def list_providers():
     return {
-        "available_providers": [
-            {
-                "name": "Runway",
-                "id": "runway",
-                "model": "Gen-3",
-                "max_duration": 30,
-                "quality": "very_high",
-                "speed": "medium",
-                "description": "State-of-the-art video generation with exceptional quality",
-            },
-            {
-                "name": "Minimax",
-                "id": "minimax",
-                "model": "Video-01",
-                "max_duration": 30,
-                "quality": "high",
-                "speed": "fast",
-                "description": "Fast and consistent video generation",
-            },
-        ],
+        "available_providers": PROVIDER_SUMMARIES,
         "default": settings.DEFAULT_VIDEO_PROVIDER,
     }
 
@@ -95,26 +121,18 @@ async def generate_video(
             duration=duration,
         )
 
-        video_job = VideoJobModel(
+        video_job = create_video_job_record(
             job_id=job_id,
             username=username,
-            prompt=request.prompt,
-            image_url=request.image_url,
-            provider=request.provider.value,
-            duration=str(duration),
-            status="pending",
+            request=request,
             provider_job_id=generated_job_id,
+            duration=duration,
         )
         db.add(video_job)
         db.commit()
         db.refresh(video_job)
 
-        return VideoGenerationResponse(
-            job_id=job_id,
-            status="pending",
-            provider=request.provider.value,
-            message=f"Video generation started using {request.provider.value}. Provider Job ID: {generated_job_id}",
-        )
+        return build_generation_response(job_id, request.provider, video_job.video_url)
     except ValueError as exc:
         logger.error("[%s] Validation error: %s", job_id, exc)
         raise HTTPException(status_code=400, detail=str(exc)) from exc

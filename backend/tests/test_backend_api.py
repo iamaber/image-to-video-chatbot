@@ -55,7 +55,8 @@ def test_generate_requires_auth(tmp_path):
         "/api/v1/generate",
         json={
             "prompt": "A slow cinematic flyover above mountain lake at sunrise",
-            "provider": "runway",
+            "provider": "svd",
+            "image_url": "https://example.com/source.png",
             "duration": 5,
         },
     )
@@ -93,7 +94,7 @@ def test_jobs_are_owned_and_listed_per_user(tmp_path, monkeypatch):
             return {
                 "job_id": job_id,
                 "status": "completed",
-                "video_url": "https://cdn.example.com/video.mp4",
+                "video_url": "http://127.0.0.1:8000/generated/test.mp4",
                 "progress": 100,
                 "error": None,
             }
@@ -109,19 +110,22 @@ def test_jobs_are_owned_and_listed_per_user(tmp_path, monkeypatch):
         headers={"Authorization": f"Bearer {alice_token}"},
         json={
             "prompt": "A slow cinematic flyover above mountain lake at sunrise",
-            "provider": "runway",
+            "provider": "svd",
+            "image_url": "https://example.com/source.png",
             "duration": 5,
         },
     )
     assert alice_job.status_code == 200
     alice_job_id = alice_job.json()["job_id"]
+    assert alice_job.json()["status"] == "completed"
 
     bob_job = client.post(
         "/api/v1/generate",
         headers={"Authorization": f"Bearer {bob_token}"},
         json={
             "prompt": "Robot drummer on neon stage with moving camera and smoke",
-            "provider": "minimax",
+            "provider": "svd",
+            "image_url": "https://example.com/other-source.png",
             "duration": 6,
         },
     )
