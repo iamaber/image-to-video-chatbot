@@ -19,7 +19,7 @@
           <p>Plain HTML, CSS, JS. No cards. One clean workspace for auth, generation, status polling, and job history.</p>
           <div class="endpoint-row">
             <label for="api-base">Backend URL</label>
-            <input id="api-base" name="api-base" type="url" value="http://127.0.0.1:8000">
+            <input id="api-base" name="api-base" type="url" value="http://localhost:8000">
             <button id="save-base" type="button">Save endpoint</button>
           </div>
         </div>
@@ -56,8 +56,8 @@
       <section class="strip split-stage">
         <div class="stage-copy">
           <p class="eyebrow">Generate</p>
-          <h2>Send prompt, provider, duration, optional image.</h2>
-          <p>Backend call uses bearer token from login. Latest job id auto-fills status checker.</p>
+          <h2>Send prompt, provider, duration, and source image.</h2>
+          <p>Backend call uses bearer token from login. This project now runs a free local image-to-video model, so `image_url` is required.</p>
         </div>
         <form id="generate-form" class="grid-form">
           <label class="full">Prompt
@@ -65,8 +65,7 @@
           </label>
           <label>Provider
             <select name="provider">
-              <option value="runway">Runway</option>
-              <option value="minimax">Minimax</option>
+              <option value="svd">Stable Video Diffusion</option>
             </select>
           </label>
           <label>Duration
