@@ -1,10 +1,9 @@
 # Video generation service integrations
 import asyncio
 import logging
-from enum import Enum
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 from uuid import uuid4
 
 import httpx
@@ -13,67 +12,8 @@ from PIL import Image
 from backend.app.config import settings
 
 logger = logging.getLogger(__name__)
-STATUS_ALIASES = {
-    "queued": "pending",
-    "queueing": "pending",
-    "pending": "pending",
-    "submitted": "pending",
-    "starting": "pending",
-    "processing": "processing",
-    "running": "processing",
-    "in_progress": "processing",
-    "completed": "completed",
-    "complete": "completed",
-    "success": "completed",
-    "succeeded": "completed",
-    "done": "completed",
-    "failed": "failed",
-    "error": "failed",
-    "cancelled": "failed",
-    "canceled": "failed",
-}
-DEFAULT_PROGRESS_BY_STATUS = {
-    "pending": 0,
-    "processing": 50,
-    "completed": 100,
-    "failed": 0,
-}
 
-
-class VideoProvider(str, Enum):
-    SVD = "svd"
-
-
-def normalize_provider_status(raw_status: Optional[str]) -> str:
-    if not raw_status:
-        return "unknown"
-
-    normalized = raw_status.strip().lower()
-    return STATUS_ALIASES.get(normalized, normalized)
-
-
-def build_status_payload(
-    job_id: str,
-    raw_status: Optional[str],
-    video_url: Optional[str] = None,
-    progress: Optional[int] = None,
-    error: Optional[str] = None,
-) -> dict:
-    status = normalize_provider_status(raw_status)
-
-    if progress is None:
-        progress = DEFAULT_PROGRESS_BY_STATUS.get(status, 0)
-
-    return {
-        "job_id": job_id,
-        "status": status,
-        "video_url": video_url,
-        "progress": progress,
-        "error": error,
-    }
-
-
-class StableVideoDiffusionService:
+class VideoGenerationService:
     def __init__(self):
         self.model_id = settings.SVD_MODEL_ID
         self.device = settings.SVD_DEVICE
@@ -141,12 +81,12 @@ class StableVideoDiffusionService:
     def _build_public_video_url(self, filename: str) -> str:
         return f"{settings.PUBLIC_BASE_URL.rstrip('/')}/generated/{filename}"
 
-    async def generate_video(
+    async def generate(
         self,
         prompt: str,
         image_url: Optional[str] = None,
         duration: int = 5,
-    ) -> Tuple[str, str]:
+    ) -> str:
         del prompt, duration
 
         if not image_url:
@@ -154,29 +94,7 @@ class StableVideoDiffusionService:
 
         try:
             image = await self._download_image(image_url)
-            video_url = await asyncio.to_thread(self._generate_sync, image)
-            return video_url, video_url
+            return await asyncio.to_thread(self._generate_sync, image)
         except Exception:
             logger.exception("Error generating video with Stable Video Diffusion")
             raise
-
-    async def get_status(self, job_id: str) -> dict:
-        return build_status_payload(job_id, "completed", video_url=job_id, progress=100)
-
-
-class VideoGenerationService:
-    def __init__(self, provider: VideoProvider = VideoProvider.SVD):
-        if provider != VideoProvider.SVD:
-            raise ValueError(f"Unknown provider: {provider}")
-        self.service = StableVideoDiffusionService()
-
-    async def generate(
-        self,
-        prompt: str,
-        image_url: Optional[str] = None,
-        duration: int = 5,
-    ) -> Tuple[str, str]:
-        return await self.service.generate_video(prompt, image_url, duration)
-
-    async def get_status(self, job_id: str) -> dict:
-        return await self.service.get_status(job_id)

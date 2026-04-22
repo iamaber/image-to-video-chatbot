@@ -1,15 +1,8 @@
-from pathlib import Path
-import sys
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 from backend.app.main import app
 from backend.app.config import settings
 
 
-if __name__ == "__main__":
+def main() -> None:
     import uvicorn
 
     uvicorn.run(
@@ -18,3 +11,7 @@ if __name__ == "__main__":
         port=settings.API_PORT,
         reload=settings.DEBUG,
     )
+
+
+if __name__ == "__main__":
+    main()
