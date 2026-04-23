@@ -3,114 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Motion Console</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>Image to Video</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <div class="page-shell">
-    <header class="hero">
-      <p class="eyebrow">Image to Video Control Surface</p>
-      <div class="hero-grid">
-        <h1>Quiet frontend. Sharp lines. Real API.</h1>
-        <div class="hero-copy">
-          <p>Plain HTML, CSS, JS. No cards. One clean workspace for auth, generation, status polling, and job history.</p>
-          <div class="endpoint-row">
-            <label for="api-base">Backend URL</label>
-            <input id="api-base" name="api-base" type="url" value="http://localhost:8000">
-            <button id="save-base" type="button">Save endpoint</button>
-          </div>
-        </div>
-      </div>
+  <main class="app">
+    <header class="header">
+      <h1>Image to Video</h1>
+      <p>Minimal frontend rebuilt from scratch.</p>
     </header>
 
-    <main>
-      <section class="strip two-up">
-        <div class="panel-flow">
-          <h2>Register</h2>
-          <form id="register-form" class="lined-form">
-            <label>Username <input name="username" required></label>
-            <label>Email <input name="email" type="email" required></label>
-            <label>Password <input name="password" type="password" required></label>
-            <label>Full name <input name="full_name"></label>
-            <button type="submit">Create account</button>
-          </form>
-        </div>
-        <div class="panel-flow">
-          <h2>Login</h2>
-          <form id="login-form" class="lined-form">
-            <label>Username <input name="username" required></label>
-            <label>Password <input name="password" type="password" required></label>
-            <button type="submit">Get token</button>
-          </form>
-          <div class="status-line">
-            <span>Active user</span>
-            <strong id="active-user">none</strong>
-          </div>
-          <button id="me-button" type="button" class="ghost">Check `/auth/me`</button>
-        </div>
-      </section>
+    <section class="panel">
+      <h2>Backend</h2>
+      <div class="row">
+        <label for="api-base">API URL</label>
+        <input id="api-base" type="url" value="http://127.0.0.1:8000">
+        <button id="save-base" type="button">Save</button>
+      </div>
+      <p id="backend-result" class="result">Set the backend base URL if needed.</p>
+    </section>
 
-      <section class="strip split-stage">
-        <div class="stage-copy">
-          <p class="eyebrow">Generate</p>
-          <h2>Send prompt, provider, duration, and source image.</h2>
-          <p>Backend call uses bearer token from login. This project now runs a free local image-to-video model, so `image_url` is required.</p>
-        </div>
-        <form id="generate-form" class="grid-form">
-          <label class="full">Prompt
-            <textarea name="prompt" rows="5" required>A dramatic camera glide across a rain-soaked city rooftop at dawn with moving fog and reflective neon.</textarea>
-          </label>
-          <label>Provider
-            <select name="provider">
-              <option value="svd">Stable Video Diffusion</option>
-            </select>
-          </label>
-          <label>Duration
-            <input name="duration" type="number" min="1" max="10" value="5">
-          </label>
-          <label class="full">Image URL
-            <input name="image_url" type="url" placeholder="https://example.com/reference.png">
-          </label>
-          <button type="submit" class="full">Start generation</button>
-        </form>
-      </section>
-
-      <section class="strip two-up">
-        <div class="panel-flow">
-          <h2>Status</h2>
-          <form id="status-form" class="lined-form">
-            <label>Job ID <input id="status-job-id" name="job_id" required></label>
-            <button type="submit">Poll backend</button>
-          </form>
-          <dl class="metric-list" id="status-metrics">
-            <div><dt>Status</dt><dd>idle</dd></div>
-            <div><dt>Provider</dt><dd>none</dd></div>
-            <div><dt>Progress</dt><dd>0%</dd></div>
-            <div><dt>Video</dt><dd>not ready</dd></div>
-          </dl>
-        </div>
-        <div class="panel-flow">
-          <h2>History</h2>
-          <div class="history-actions">
-            <button id="load-jobs" type="button">Load my jobs</button>
-            <button id="clear-token" type="button" class="ghost">Clear token</button>
-          </div>
-          <div id="jobs-list" class="jobs-table" aria-live="polite"></div>
-        </div>
-      </section>
-
-      <section class="strip console-strip">
-        <div class="console-header">
-          <p class="eyebrow">Console</p>
-          <h2>Request / response trace</h2>
-        </div>
-        <pre id="console-output">Ready.</pre>
-      </section>
-    </main>
-  </div>
+    <section class="panel">
+      <h2>Generate</h2>
+      <form id="generate-form" class="form">
+        <label>Prompt
+          <textarea name="prompt" rows="4" required>A dramatic camera glide across a rain-soaked city rooftop at dawn with moving fog and reflective neon.</textarea>
+        </label>
+        <label>Duration (seconds)
+          <input name="duration" type="number" min="1" max="10" value="5" required>
+        </label>
+        <label>Image URL
+          <input name="image_url" type="url" placeholder="https://example.com/reference.png" required>
+        </label>
+        <button type="submit">Generate</button>
+      </form>
+      <p id="generate-result" class="result">No generation yet.</p>
+    </section>
+  </main>
 
   <script src="./app.js"></script>
 </body>
