@@ -1,16 +1,14 @@
 # Image-to-Video Chatbot
 
-Image-to-video app with FastAPI backend and plain HTML/CSS/JS frontend. Backend handles auth, job creation, local video generation, and job history. Frontend gives simple local control surface for register, login, generate, status checks, and job history.
+Image-to-video app with FastAPI backend and plain HTML/CSS/JS frontend. Backend handles local video generation. Frontend is a minimal control surface for submitting an image and prompt, then opening the generated result.
 
 ## Project Structure
 
 ```text
 backend/
   app/                 FastAPI app code
-  alembic/             DB migrations
   tests/               Backend tests
   main.py              Backend entrypoint
-  init_db.py           Local DB bootstrap
 frontend/
   index.html           Static UI
   styles.css           UI styles
@@ -19,10 +17,9 @@ frontend/
 
 ## Tech Stack
 
-- Backend: FastAPI, SQLAlchemy, Alembic, JWT auth
+- Backend: FastAPI
 - Model: Stable Video Diffusion via Diffusers
 - Frontend: HTML, CSS, vanilla JavaScript
-- DB: PostgreSQL
 - Tooling: `uv`, `pytest`
 
 ## Setup
@@ -41,26 +38,16 @@ cp backend/.env.example backend/.env
 
 3. Update `backend/.env`:
 
-- `DATABASE_URL`
-- `SECRET_KEY`
 - `SVD_DEVICE`
 - `PUBLIC_BASE_URL`
+- `GENERATE_API_KEY` (optional, recommended outside local dev)
+- `GENERATION_TIMEOUT_SECONDS` (request timeout guard for long generation jobs)
 
-4. Install local model runtime:
+Stable Video Diffusion runtime dependencies are installed by `uv sync --dev`. The first real generation run will still download model weights locally.
 
-```bash
-uv add torch diffusers transformers accelerate "imageio[ffmpeg]"
-```
-
-Stable Video Diffusion is a free open-weight model, not a free hosted API. You run it locally, download the weights, and need enough disk/GPU memory for inference.
+Stable Video Diffusion is a free open-weight model, not a free hosted API. You run it locally and need enough disk/GPU memory for inference.
 
 ## Run Backend
-
-Apply migrations:
-
-```bash
-uv run alembic -c backend/alembic.ini upgrade head
-```
 
 Start API:
 
@@ -90,23 +77,15 @@ Default frontend backend URL:
 
 ## Main API Endpoints
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/token`
-- `GET /auth/me`
-- `GET /api/v1/providers`
 - `POST /api/v1/generate`
-- `GET /api/v1/status/{job_id}`
-- `GET /api/v1/job/{job_id}`
-- `GET /api/v1/jobs`
+
+`POST /api/v1/generate` accepts optional `X-API-Key` when `GENERATE_API_KEY` is configured.
 
 ## Typical Flow
 
-1. Register user.
-2. Login and get bearer token.
-3. Submit generation request.
-4. Poll job status or open returned video URL.
-5. Load user job history.
+1. Submit a prompt, source image URL, and duration.
+2. Receive generation status and a generated video URL.
+3. Open the returned video URL.
 
 ## Testing
 
@@ -118,7 +97,6 @@ uv run pytest -q
 
 ## Notes
 
-- Backend enforces job ownership per authenticated user.
 - Frontend is intentionally framework-free and easy to modify.
 - CORS defaults already allow common local frontend ports.
 - Generated local videos are served from `/generated/...`.
