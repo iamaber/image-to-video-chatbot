@@ -1,16 +1,14 @@
 [project]
-name = "chatbot"
+name = "vid-chatbot"
 version = "0.1.0"
-description = "Image-to-video generation chatbot using Runway/Minimax"
+description = "Image-to-video generation app using Stable Video Diffusion"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "alembic>=1.14.0",
     "accelerate>=1.11.0",
     "diffusers>=0.35.1",
     "fastapi[standard]>=0.123.10",
     "imageio[ffmpeg]>=2.37.0",
-    "pydantic-ai>=0.7.0",
     "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
     "httpx>=0.25.0",
@@ -19,13 +17,6 @@ dependencies = [
     "torch>=2.8.0",
     "transformers>=4.56.0",
     "uvicorn[standard]>=0.27.0",
-    "openai>=1.0.0",
-    "python-jose[cryptography]>=3.3.0",
-    "passlib>=1.7.4",
-    "bcrypt>=4.3.0,<5.0.0",
-    "pyjwt>=2.8.0",
-    "sqlalchemy>=2.0.0",
-    "psycopg2-binary>=2.9.0",
 ]
 
 [dependency-groups]
